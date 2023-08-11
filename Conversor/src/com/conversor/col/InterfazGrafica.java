@@ -5,7 +5,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.List;
+import java.text.NumberFormat;
 
 public class InterfazGrafica extends JFrame {
     private JTextField cantidadTextField;
@@ -26,7 +28,7 @@ public class InterfazGrafica extends JFrame {
     	acronimos.add("USD");
         acronimos.add("EUR");
         acronimos.add("BRL");
-        acronimos.add("MXN");
+        acronimos.add("JPY");
         acronimos.add("DKK");
         acronimos.add("GEL");
         acronimos.add("ILS");
@@ -126,27 +128,38 @@ public class InterfazGrafica extends JFrame {
         apiStatusIndicator.setOpaque(true);
     }
 
-    private ActionListener creandoconversion(String currencyCode, String currencyName) {
-        return e -> conversion(currencyCode, currencyName);
+    private ActionListener creandoconversion(String acronimo, String nombre) {
+        return e -> conversion(acronimo, nombre);
     }
 
-    private void conversion(String currencyCode, String currencyName) {
+    private void conversion(String acronimo, String nombre) {
           try {
             double cantidadMoneda = Double.parseDouble(cantidadTextField.getText());
 
             Api api = new Api();
-            double exchangeRate = api.getExchangeRate(currencyCode);
+            double exchangeRate = api.getExchangeRate(acronimo);
             double copExchangeRate = api.getExchangeRate("COP");
 
             double moneda;
             if (invertirconversion) {
                 moneda = cantidadMoneda * copExchangeRate / exchangeRate;
+                acronimo="COP";
+                nombre ="Pesos Colombianos";
                 resultadoLabel.setText("Resultado: Tienes " + String.format("%.2f", moneda) + " Pesos Colombianos");
             } else {
                 moneda = cantidadMoneda / copExchangeRate * exchangeRate;
-                moneda = (double) Math.round(moneda * 100d) / 100;
-                resultadoLabel.setText("Resultado: Tienes $" + String.format("%.2f", moneda) + " " + currencyName);
-            }
+                
+            }    
+            
+            NumberFormat currencyFormat = NumberFormat.getCurrencyInstance();
+            Currency selectedCurrency = Currency.getInstance(acronimo);
+            currencyFormat.setCurrency(selectedCurrency);
+
+            String formattedMoneda = currencyFormat.format(moneda);
+            
+                
+            resultadoLabel.setText("Resultado: Tienes " + formattedMoneda + " " + nombre);
+            
 
             apiStatusLabel.setText("Conexión OK");
             apiStatusLabel.setForeground(Color.GREEN);
@@ -161,7 +174,9 @@ public class InterfazGrafica extends JFrame {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException, AWTException {
+    	
+    	UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
         SwingUtilities.invokeLater(() -> {
             InterfazGrafica ventana = new InterfazGrafica();
             ventana.setVisible(true);
